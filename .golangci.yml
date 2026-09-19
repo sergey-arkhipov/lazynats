@@ -1,0 +1,26 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - bodyclose
+    - misspell
+    - unconvert
+    - revive
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -1,0 +1,14 @@
+# Example of an external theme. Specify the path to this file as `theme_path` in `config.yaml`
+# so that a designer can modify the palette without touching the Go code (see `internal/ui/theme/theme.go`).
+
+background: "#1e1e2e"
+foreground: "#cdd6f4"
+border: "#45475a"
+border_focus: "#89b4fa"
+accent: "#89b4fa"
+muted: "#6c7086"
+danger: "#f38ba8"
+success: "#a6e3a1"
+warning: "#f9e2af"
+selection_bg: "#313244"
+selection_fg: "#cdd6f4"

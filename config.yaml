@@ -1,0 +1,8 @@
+# Copy to ~/.config/lazynats/config.yaml (or pass --config /path/to/file)
+# Any field can be overridden via environment variable LAZYNATS_<FIELD_NAME_IN_UPPERCASE>,
+# e.g. LAZYNATS_NATS_URL=nats://prod:4222 (handled by spf13/viper).
+
+nats_url: "nats://127.0.0.1:4222"
+
+# Optional: path to theme file (see internal/ui/theme/theme.go → Palette)
+# theme_path: "~/.config/lazynats/theme.yaml"

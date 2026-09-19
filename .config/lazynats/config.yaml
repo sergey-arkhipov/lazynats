@@ -1,0 +1,6 @@
+# Скопируйте в ~/.config/lazynats/config.yaml (или укажите --config путь_к_файлу)
+
+nats_url: "nats://test:test@127.0.0.1:4222"
+
+# Необязательно: путь к файлу темы (см. internal/ui/theme/theme.go -> Palette)
+# theme_path: "~/.config/lazynats/theme.yaml"
