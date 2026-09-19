@@ -5,6 +5,8 @@ A TUI for NATS in the style of lazygit / lazydocker, built with
 Two tabs — **Streams** and **Buckets (KV)** — with a list on the left
 (~1/3 of the screen) and content on the right.
 
+![lazynats main window](docs/screenshot.png)
+
 ## Stack
 
 - Go 1.23+
