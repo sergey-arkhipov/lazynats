@@ -1,4 +1,7 @@
+<a id="top-en"></a>
 # lazynats
+
+**English** | [Русский](#top-ru)
 
 A TUI for NATS in the style of lazygit / lazydocker, built with
 [Bubble Tea](https://github.com/charmbracelet/bubbletea) (Elm architecture).
@@ -169,7 +172,10 @@ bilingual write-up.
 
 ---
 
+<a id="top-ru"></a>
 # lazynats (на русском)
+
+[English](#top-en) | **Русский**
 
 TUI-клиент для NATS в духе lazygit / lazydocker, построенный на
 [Bubble Tea](https://github.com/charmbracelet/bubbletea) (архитектура Elm).
