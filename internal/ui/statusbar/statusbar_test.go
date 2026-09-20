@@ -10,6 +10,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var ansiRE = regexp.MustCompile("\x1b\\[[0-9;]*m")
@@ -234,4 +236,91 @@ func TestView_DoesNotPanicWithEmptyEverything(t *testing.T) {
 		}
 	}()
 	_ = m.View()
+}
+
+func TestView_HintsWrapToSecondLine(t *testing.T) {
+	m := newTestModel()
+	m.SetWidth(40)
+	m.SetHints([]Hint{
+		{Key: "q", Action: "exit"},
+		{Key: "n", Action: "next"},
+		{Key: "p", Action: "prev"},
+		{Key: "d", Action: "delete"},
+	})
+	out := stripANSI(m.View())
+	rows := strings.Split(out, "\n")
+
+	if len(rows) != 2 {
+		t.Fatalf("rows = %d, want 2\n%s", len(rows), out)
+	}
+	// First row holds the status and the hints that fit.
+	if !strings.Contains(rows[0], "● offline") || !strings.Contains(rows[0], "q exit") {
+		t.Errorf("first row = %q", rows[0])
+	}
+	if strings.Contains(rows[0], "d delete") {
+		t.Errorf("first row should not contain the wrapped hint: %q", rows[0])
+	}
+	// Second row holds the remainder.
+	if !strings.Contains(rows[1], "d delete") {
+		t.Errorf("second row = %q", rows[1])
+	}
+}
+
+func TestView_NoHintsLostOnWrap(t *testing.T) {
+	hints := []Hint{
+		{Key: "q", Action: "exit"},
+		{Key: "n", Action: "next"},
+		{Key: "p", Action: "prev"},
+		{Key: "d", Action: "delete"},
+	}
+	m := newTestModel()
+	m.SetWidth(20) // force wrapping
+	m.SetHints(hints)
+	out := stripANSI(m.View())
+
+	// Every hint must appear exactly once across all rows.
+	for _, h := range hints {
+		s := h.Key + " " + h.Action
+		if n := strings.Count(out, s); n != 1 {
+			t.Errorf("hint %q appears %d times, want 1\n%s", s, n, out)
+		}
+	}
+}
+
+func TestView_WrapInvariantAcrossWidths(t *testing.T) {
+	hints := []Hint{{Key: "q", Action: "exit"}, {Key: "d", Action: "delete"}}
+	for w := 1; w <= 60; w++ {
+		m := newTestModel()
+		m.SetWidth(w)
+		m.SetHints(hints)
+		out := stripANSI(m.View())
+		for _, h := range hints {
+			if s := h.Key + " " + h.Action; strings.Count(out, s) != 1 {
+				t.Errorf("width %d: hint %q count = %d\n%s", w, s, strings.Count(out, s), out)
+			}
+		}
+		// Wide enough: everything must stay on a single row.
+		if w >= 30 {
+			if n := strings.Count(out, "\n"); n != 0 {
+				t.Errorf("width %d: rows = %d, want 1\n%s", w, n+1, out)
+			}
+		}
+	}
+}
+
+// TestView_FirstHintWrapsAlone ensures a hint that doesn't fit next to the
+// status text wraps onto its own line instead of overflowing the first row.
+func TestView_FirstHintWrapsAlone(t *testing.T) {
+	m := newTestModel()
+	m.SetConnection(true, "some-server-name:4222")
+	m.SetWidth(30)
+	m.SetHints([]Hint{{Key: "tab", Action: "switch tab"}})
+
+	got := m.View()
+	lines := strings.Split(got, "\n")
+
+	require.Len(t, lines, 2)
+	for _, l := range lines {
+		assert.LessOrEqual(t, lipgloss.Width(l), 30)
+	}
 }
