@@ -3,6 +3,11 @@
 
 **English** | [Русский](#top-ru)
 
+![coverage](./coverage.svg)
+![build](https://github.com/sergey-arkhipov/lazynats/actions/workflows/ci.yml/badge.svg)
+![release](https://img.shields.io/github/v/release/sergey-arkhipov/lazynats)
+![license](https://img.shields.io/github/license/sergey-arkhipov/lazynats)
+
 A TUI for NATS in the style of lazygit / lazydocker, built with
 [Bubble Tea](https://github.com/charmbracelet/bubbletea) (Elm architecture).
 Two tabs — **Streams** and **Buckets (KV)** — with a list on the left
