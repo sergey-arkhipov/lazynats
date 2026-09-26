@@ -99,6 +99,12 @@ type streamInfoLoadedMsg struct {
 	err  error
 }
 
+type streamConsumersLoadedMsg struct {
+	name         string
+	consumerInfo []natsclient.ConsumerInfo
+	err          error
+}
+
 // SelectedStreamMsg move up when stream selected.
 type SelectedStreamMsg struct {
 	Name string
@@ -242,6 +248,17 @@ func (m Model) loadStreamInfoCmd(name string) tea.Cmd {
 	}
 }
 
+func (m Model) loadStreamConsumersCmd(name string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		defer cancel()
+
+		consumers, err := client.ConsumerList(ctx, name)
+		return streamConsumersLoadedMsg{name: name, consumerInfo: consumers, err: err}
+	}
+}
+
 // SetSize  set layout window size.
 func (m *Model) SetSize(width, height int) {
 	m.width, m.height = width, height
@@ -344,6 +361,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.content.SetContent(msg.name, "Stream Info · esc/h/← back · y copy", formatStreamInfo(msg.info))
 		return m, nil
 
+	case streamConsumersLoadedMsg:
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.err = nil
+		m.content.SetContent(msg.name, "Stream Consumers · esc/h/← back · y copy", formatConsumers(msg.consumerInfo, m.theme))
+		return m, nil
+
 	case tea.KeyMsg:
 		if m.focus == FocusStreams && m.streams.FilterState() == list.Filtering {
 			var cmd tea.Cmd
@@ -382,6 +408,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case bkey.Matches(msg, m.keys.Info):
 			if m.focus == FocusStreams {
 				return m.enterStreamInfoMode()
+			}
+		case bkey.Matches(msg, m.keys.Consumers):
+			if m.focus == FocusStreams {
+				return m.enterStreamConsumersMode()
 			}
 		}
 	}
@@ -439,6 +469,20 @@ func (m Model) enterStreamInfoMode() (Model, tea.Cmd) {
 	m.content.SetContent(streamSel.summary.Name, "loading...", "")
 
 	return m, m.loadStreamInfoCmd(streamSel.summary.Name)
+}
+
+// enterStreamInfoMode initiates the loading of StreamInfo for the selected stream
+// and switches the right panel to view mode.
+func (m Model) enterStreamConsumersMode() (Model, tea.Cmd) {
+	streamSel, ok := m.streams.SelectedItem().(streamItem)
+	if !ok {
+		return m, nil
+	}
+
+	m.mode = modeContent
+	m.content.SetContent(streamSel.summary.Name, "loading...", "")
+
+	return m, m.loadStreamConsumersCmd(streamSel.summary.Name)
 }
 
 // refreshSubjectsForSelection updates the right-hand subjects panel
@@ -541,6 +585,37 @@ func formatStreamInfo(info *jetstream.StreamInfo) string {
 	fmt.Fprintf(&b, "Consumers:    %d\n", st.Consumers)
 
 	return b.String()
+}
+
+func formatConsumers(items []natsclient.ConsumerInfo, th theme.Theme) string {
+	if len(items) == 0 {
+		return th.Muted.Render("No consumers found.")
+	}
+
+	lines := make([]string, 0, len(items)*2)
+	for _, c := range items {
+		nameStyle := th.EntryName
+		if c.Delivered == 0 {
+			nameStyle = th.EntryNameMuted
+		}
+
+		lines = append(lines, nameStyle.Render(fmt.Sprintf("• %s", c.Name)))
+
+		lastStr := "-"
+		if c.Last != nil {
+			lastStr = c.Last.Format("2006-01-02 15:04:05")
+		}
+		filters := strings.Join(c.FilterSubjects, ", ")
+		if filters == "" {
+			filters = "-"
+		}
+
+		meta := fmt.Sprintf("filters: %s  pending: %d  delivered: %d  last: %s",
+			filters, c.NumPending, c.Delivered, lastStr)
+		lines = append(lines, th.EntryMeta.Render(meta))
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // wrapTwoLines hard-wraps s to at most 2 lines of the given width,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -15,6 +16,16 @@ type StreamSummary struct {
 	Subjects []string
 	Messages uint64
 	Bytes    uint64
+}
+
+// ConsumerInfo - info about consumer
+type ConsumerInfo struct {
+	Name           string
+	Created        time.Time
+	FilterSubjects []string
+	NumPending     uint64
+	Delivered      uint64
+	Last           *time.Time
 }
 
 // ListStreams sorted streams
@@ -88,4 +99,36 @@ func (c *Client) CreateStream(ctx context.Context, name string, subjects []strin
 		return fmt.Errorf("create stream %q: %w", name, err)
 	}
 	return nil
+}
+
+// ConsumerList - consumer's names for stream
+func (c *Client) ConsumerList(ctx context.Context, name string) ([]ConsumerInfo, error) {
+	stream, err := c.js.Stream(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("get stream %q: %w", name, err)
+	}
+	var result []ConsumerInfo
+	lstConsumers := stream.ListConsumers(ctx)
+	for con := range lstConsumers.Info() {
+		filters := con.Config.FilterSubjects
+		if len(filters) == 0 && con.Config.FilterSubject != "" {
+			filters = []string{con.Config.FilterSubject}
+		}
+		info := ConsumerInfo{
+			Name:           con.Name,
+			Created:        con.Created,
+			FilterSubjects: filters,
+			NumPending:     con.NumPending,
+			Delivered:      con.Delivered.Consumer,
+		}
+		if con.Delivered.Last != nil {
+			info.Last = con.Delivered.Last
+		}
+		result = append(result, info)
+	}
+	if err := lstConsumers.Err(); err != nil {
+		return nil, fmt.Errorf("list consumers for %q: %w", name, err)
+	}
+
+	return result, nil
 }

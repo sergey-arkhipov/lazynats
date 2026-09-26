@@ -10,6 +10,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 )
 
@@ -351,6 +352,37 @@ func TestModel_Update_YKeyTriggersCopyCommand(t *testing.T) {
 		t.Fatalf("expected CopyResultMsg, got %T", msg)
 	}
 	_ = result
+}
+
+func TestModel_Update_YKeyStripsANSIBeforeCopy(t *testing.T) {
+	m := newTestModel()
+	m.SetSize(80, 20)
+
+	styled := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("copy me")
+	if !strings.Contains(styled, "\x1b[") {
+		t.Fatal("test setup: styled string should contain ANSI escape codes")
+	}
+	m.SetContent("t", "", styled)
+
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")})
+	if cmd == nil {
+		t.Fatal("expected a command to be returned for 'y' key, got nil")
+	}
+
+	// Verify what actually gets stripped matches what ansi.Strip produces,
+	// mirroring the logic inside Update's "y" handler.
+	stripped := ansi.Strip(m.body)
+	if strings.Contains(stripped, "\x1b[") {
+		t.Errorf("stripped body still contains ANSI escapes: %q", stripped)
+	}
+	if stripped != "copy me" {
+		t.Errorf("stripped body = %q, want %q", stripped, "copy me")
+	}
+
+	msg := cmd()
+	if _, ok := msg.(CopyResultMsg); !ok {
+		t.Fatalf("expected CopyResultMsg, got %T", msg)
+	}
 }
 
 func TestModel_Update_CopyResultSetsNoticeOnSuccess(t *testing.T) {

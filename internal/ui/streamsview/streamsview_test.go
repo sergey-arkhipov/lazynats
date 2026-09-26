@@ -242,6 +242,58 @@ func TestUpdateStreamInfoLoadedError(t *testing.T) {
 	}
 }
 
+func TestUpdateStreamConsumersLoaded(t *testing.T) {
+	m := newTestModel()
+	m.mode = modeContent
+
+	last := time.Date(2026, 9, 25, 13, 27, 27, 0, time.UTC)
+	consumers := []natsclient.ConsumerInfo{
+		{
+			Name:           "transformer-v1-0-0-csquad-csscat",
+			FilterSubjects: []string{"*.*.*.csscat.>"},
+			NumPending:     0,
+			Delivered:      8,
+			Last:           &last,
+		},
+	}
+
+	newM, _ := m.Update(streamConsumersLoadedMsg{name: "s1", consumerInfo: consumers})
+
+	if newM.err != nil {
+		t.Fatalf("unexpected err: %v", newM.err)
+	}
+	if !newM.InContentMode() {
+		t.Error("expected content mode")
+	}
+	if !strings.Contains(newM.content.Body(), "transformer-v1-0-0-csquad-csscat") {
+		t.Error("expected consumer name in content body")
+	}
+}
+
+func TestUpdateStreamConsumersLoadedError(t *testing.T) {
+	m := newTestModel()
+	m.mode = modeContent
+
+	newM, _ := m.Update(streamConsumersLoadedMsg{err: errors.New("fail")})
+	if newM.err == nil {
+		t.Error("expected err to be set")
+	}
+}
+
+func TestUpdateStreamConsumersLoadedEmpty(t *testing.T) {
+	m := newTestModel()
+	m.mode = modeContent
+
+	newM, _ := m.Update(streamConsumersLoadedMsg{name: "s1", consumerInfo: nil})
+
+	if newM.err != nil {
+		t.Fatalf("unexpected err: %v", newM.err)
+	}
+	if !newM.InContentMode() {
+		t.Error("expected content mode")
+	}
+}
+
 // ---------------------------------------------------------------------
 // Update — keyboard navigation
 // ---------------------------------------------------------------------
