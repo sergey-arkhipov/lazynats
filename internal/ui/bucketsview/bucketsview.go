@@ -178,6 +178,12 @@ func (m Model) Init() tea.Cmd {
 	return m.loadBucketsCmd()
 }
 
+// ResetFilter clears any active filter on the buckets list.
+func (m *Model) ResetFilter() {
+	m.buckets.ResetFilter()
+	m.keysL.ResetFilter()
+}
+
 func (m Model) loadBucketsCmd() tea.Cmd {
 	client := m.client
 	return func() tea.Msg {
