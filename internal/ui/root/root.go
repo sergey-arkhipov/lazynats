@@ -176,6 +176,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.updateHints()
 				return m, nil
 			case bkey.Matches(msg, m.global.Refresh):
+				// Reset filter
+				switch m.tab {
+				case TabStreams:
+					m.streams.ResetFilter()
+				case TabBuckets:
+					m.buckets.ResetFilter()
+				}
 				return m, m.refreshCurrentTab()
 			case bkey.Matches(msg, m.global.New):
 				return m.openCreateModal()

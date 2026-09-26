@@ -215,6 +215,12 @@ func (m Model) Init() tea.Cmd {
 	return m.loadStreamsCmd()
 }
 
+// ResetFilter clears any active filter on the streams list.
+func (m *Model) ResetFilter() {
+	m.streams.ResetFilter()
+	m.subjects.ResetFilter()
+}
+
 func (m Model) loadStreamsCmd() tea.Cmd {
 	client := m.client
 	return func() tea.Msg {
