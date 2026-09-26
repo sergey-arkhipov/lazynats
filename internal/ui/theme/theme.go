@@ -56,6 +56,11 @@ type Theme struct {
 	Danger        lipgloss.Style
 	Success       lipgloss.Style
 	Warning       lipgloss.Style
+	// Generic "entry name / entry meta" pair, used for detail lists
+	// (consumers, and anything similar later).
+	EntryName      lipgloss.Style
+	EntryNameMuted lipgloss.Style
+	EntryMeta      lipgloss.Style
 }
 
 // New  Theme from Palette.
@@ -96,10 +101,17 @@ func New(p Palette) Theme {
 			Foreground(lipgloss.Color(p.Accent)).
 			Bold(true),
 
-		Muted:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Muted)),
-		Danger:  lipgloss.NewStyle().Foreground(lipgloss.Color(p.Danger)),
-		Success: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Success)),
-		Warning: lipgloss.NewStyle().Foreground(lipgloss.Color(p.Warning)),
+		Muted:     lipgloss.NewStyle().Foreground(lipgloss.Color(p.Muted)),
+		Danger:    lipgloss.NewStyle().Foreground(lipgloss.Color(p.Danger)),
+		Success:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Success)),
+		Warning:   lipgloss.NewStyle().Foreground(lipgloss.Color(p.Warning)),
+		EntryName: base.Bold(true),
+		EntryNameMuted: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(p.Muted)).
+			Bold(true),
+		EntryMeta: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(p.Muted)).
+			PaddingLeft(4),
 	}
 }
 

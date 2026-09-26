@@ -447,9 +447,8 @@ func (m *Model) updateHints() {
 	}
 	m.status.SetHints([]statusbar.Hint{
 		{Key: "tab", Action: "switch tab"},
-		{Key: "h/l", Action: "panel / open"},
-		{Key: "j/k", Action: "navigate"},
 		{Key: "i", Action: "info"},
+		{Key: "c", Action: "consumers"},
 		{Key: "n", Action: "create"},
 		{Key: "d", Action: "delete"},
 		{Key: "/", Action: "filter"},

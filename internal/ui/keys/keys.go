@@ -62,10 +62,11 @@ func DefaultGlobal() GlobalKeyMap {
 
 // ListKeyMap — navigation within a keys (streams/buckets/subjects/keys).
 type ListKeyMap struct {
-	Up     key.Binding
-	Down   key.Binding
-	Select key.Binding
-	Info   key.Binding
+	Up        key.Binding
+	Down      key.Binding
+	Select    key.Binding
+	Info      key.Binding
+	Consumers key.Binding
 }
 
 // DefaultList — default keys navigation.
@@ -86,6 +87,10 @@ func DefaultList() ListKeyMap {
 		Info: key.NewBinding(
 			key.WithKeys("i"),
 			key.WithHelp("i", "info"),
+		),
+		Consumers: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "consumers"),
 		),
 	}
 }

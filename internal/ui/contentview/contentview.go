@@ -15,6 +15,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/reflow/wrap"
 )
 
@@ -93,23 +94,6 @@ func (m *Model) setWrappedContent() {
 // Body returns the raw content — what goes to the clipboard on "y".
 func (m Model) Body() string { return m.body }
 
-// // SetSize fits the panel to the available area.
-// func (m *Model) SetSize(width, height int) {
-// 	m.width, m.height = width, height
-//
-// 	// header block height depends on wrapping, so it must be measured
-// 	// after m.width is updated; +1 accounts for the divider line
-// 	headerHeight := lipgloss.Height(m.headerBlock()) + 1
-// 	vpHeight := height - headerHeight
-// 	vpHeight = max(vpHeight, 0)
-//
-// 	m.vp.Width = width
-// 	m.vp.Height = vpHeight
-// 	if m.body != "" {
-// 		m.setWrappedContent()
-// 	}
-// }
-
 // Update handles scrolling and copying. Esc is handled by the
 // parent model (streamsview/bucketsview) — it decides when to
 // leave viewing mode and go back to the list.
@@ -117,7 +101,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "y" {
-			body := m.body
+			body := ansi.Strip(m.body)
 			return m, func() tea.Msg {
 				return CopyResultMsg{Err: clipboard.WriteAll(body)}
 			}
