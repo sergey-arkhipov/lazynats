@@ -71,8 +71,6 @@ func TestSetup_Success(t *testing.T) {
 	themePath := filepath.Join(tmpDir, "theme.yaml")
 	cfgPath := filepath.Join(tmpDir, "config.yaml")
 
-	// подстройте под реальный формат theme.Load; если пустой файл
-	// трактуется как дефолтная тема — оставьте пустым
 	require.NoError(t, os.WriteFile(themePath, []byte(""), 0o644))
 	require.NoError(t, os.WriteFile(cfgPath,
 		[]byte("nats_url: "+s.ClientURL()+"\ntheme_path: "+themePath+"\n"), 0o644))
@@ -83,7 +81,6 @@ func TestSetup_Success(t *testing.T) {
 	assert.Equal(t, s.ClientURL(), deps.Cfg.NatsURL)
 	assert.NotNil(t, deps.Client)
 	assert.NotNil(t, deps.Model)
-	// клиент реально жив — можно дёрнуть дешёвый вызов
 	streams, err := deps.Client.ListStreams(context.Background())
 	require.NoError(t, err)
 	assert.Empty(t, streams)

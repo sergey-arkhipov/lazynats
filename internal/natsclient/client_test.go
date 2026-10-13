@@ -39,7 +39,7 @@ func setupTestClient(t *testing.T) *Client {
 	return c
 }
 
-// publish helper: сообщения в стрим попадают через core NATS publish
+// publish helper
 func publish(t *testing.T, c *Client, subject string) {
 	t.Helper()
 	if err := c.nc.Publish(subject, []byte("test")); err != nil {
@@ -51,18 +51,18 @@ func TestListStreams(t *testing.T) {
 	c := setupTestClient(t)
 	ctx := context.Background()
 
-	// пустой стрим (без сообщений — subjects должен быть пустым)
+	// empty stream
 	if err := c.CreateStream(ctx, "users", []string{"USERS.*"}); err != nil {
 		t.Fatalf("create users: %v", err)
 	}
-	// стрим с сообщениями — subjects должны собраться
+	// stream with messages
 	if err := c.CreateStream(ctx, "orders", []string{"ORDERS.*"}); err != nil {
 		t.Fatalf("create orders: %v", err)
 	}
 	publish(t, c, "ORDERS.created")
 	publish(t, c, "ORDERS.paid")
 
-	// имитация KV-бакета — должен быть отфильтрован по префиксу KV_
+	// fake KV bucket
 	if err := c.CreateStream(ctx, "KV_bucket", []string{"$KV.bucket.>"}); err != nil {
 		t.Fatalf("create KV_bucket: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestListStreams(t *testing.T) {
 	if len(streams) != 2 {
 		t.Fatalf("want 2 streams, got %d: %+v", len(streams), streams)
 	}
-	// сортировка по имени: orders < users
+	// sort by name: orders < users
 	if streams[0].Name != "orders" || streams[1].Name != "users" {
 		t.Errorf("want sorted [orders users], got [%s %s]", streams[0].Name, streams[1].Name)
 	}
@@ -123,7 +123,7 @@ func TestConsumerList(t *testing.T) {
 	if err := c.CreateStream(ctx, "jobs", []string{"jobs.>"}); err != nil {
 		t.Fatalf("create stream: %v", err)
 	}
-	// создаём консьюмера напрямую через jetstream (тест в том же пакете — доступ к c.js)
+	// create consumer
 	_, err := c.js.CreateConsumer(ctx, "jobs", jetstream.ConsumerConfig{
 		Durable:       "worker1",
 		FilterSubject: "jobs.high",
@@ -151,7 +151,7 @@ func TestConsumerList(t *testing.T) {
 		t.Errorf("last: want nil for never-delivered consumer, got %v", cn.Last)
 	}
 
-	// несуществующий стрим — обёрнутый get-stream error
+	// not existed stream with get-stream error
 	if _, err := c.ConsumerList(ctx, "nope"); err == nil ||
 		!strings.Contains(err.Error(), `get stream "nope"`) {
 		t.Errorf("want wrapped get-stream error, got %v", err)
