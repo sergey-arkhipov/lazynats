@@ -19,7 +19,8 @@ func TestConnect_Success(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	c, err := Connect(ctx, opt)
 	if err != nil {
 		t.Fatalf("Connect() error = %v", err)
 	}
@@ -37,7 +38,8 @@ func TestConnect_InvalidURL(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := Connect(ctx, "not a valid url")
+	opt := Options{URL: "not valid URL"}
+	_, err := Connect(ctx, opt)
 	if err == nil {
 		t.Fatal("expected an error connecting to an invalid URL, got nil")
 	}
@@ -55,7 +57,8 @@ func TestConnect_JetStreamNotEnabled(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	_, err := Connect(ctx, opt)
 	if err == nil {
 		t.Fatal("expected an error connecting to a server without JetStream enabled, got nil")
 	}
@@ -74,7 +77,9 @@ func TestConnect_ContextCancelledBeforeAccountInfo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancelled before Connect() is even called
 
-	_, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	_, err := Connect(ctx, opt)
+
 	if err == nil {
 		t.Fatal("expected an error from Connect() with an already-cancelled context")
 	}
@@ -89,7 +94,8 @@ func TestClient_Close_ClosesConnection(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	c, err := Connect(ctx, opt)
 	if err != nil {
 		t.Fatalf("Connect() error = %v", err)
 	}
@@ -105,7 +111,8 @@ func TestClient_Close_IsIdempotent(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	c, err := Connect(ctx, opt)
 	if err != nil {
 		t.Fatalf("Connect() error = %v", err)
 	}

@@ -62,7 +62,8 @@ func newTestClient(t *testing.T, url string) *Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c, err := Connect(ctx, url)
+	opt := Options{URL: url}
+	c, err := Connect(ctx, opt)
 	if err != nil {
 		t.Fatalf("Connect() error = %v", err)
 	}
