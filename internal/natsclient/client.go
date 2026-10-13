@@ -16,16 +16,27 @@ type Client struct {
 	js jetstream.JetStream
 }
 
+// Options holds NATS connection parameters.
+type Options struct {
+	URL        string
+	JWT        string
+	ConfigPath string
+}
+
 // Connect to nats server
-func Connect(ctx context.Context, url string) (*Client, error) {
-	nc, err := nats.Connect(
-		url,
+func Connect(ctx context.Context, o Options) (*Client, error) {
+	opts := []nats.Option{
 		nats.Name("lazynats"),
-		nats.Timeout(5*time.Second),
-		nats.MaxReconnects(-1),
-	)
+		nats.Timeout(10 * time.Second),
+		nats.MaxReconnects(3),
+	}
+	if o.JWT != "" {
+		opts = append(opts, nats.Token(o.JWT))
+	}
+
+	nc, err := nats.Connect(o.URL, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("connect to nats %q: %w", url, err)
+		return nil, fmt.Errorf("connect to nats %q: %w", o.URL, err)
 	}
 
 	js, err := jetstream.New(nc)

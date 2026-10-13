@@ -80,7 +80,9 @@ func prepareKVBucket(t *testing.T, url, bucket, key string, value []byte) {
 func newTestClient(t *testing.T, url string) *natsclient.Client {
 	t.Helper()
 
-	client, err := natsclient.Connect(t.Context(), url)
+	opt := natsclient.Options{URL: url}
+
+	client, err := natsclient.Connect(t.Context(), opt)
 	if err != nil {
 		t.Fatalf("natsclient.New(%q): %v", url, err)
 	}
