@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/nats-io/nats-server/v2/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,4 +51,50 @@ func TestSetup_NATSConnectionFailed(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "connect to nats")
+}
+
+func TestSetup_Success(t *testing.T) {
+	s, err := server.NewServer(&server.Options{
+		Host:      "127.0.0.1",
+		Port:      -1,
+		JetStream: true,
+		StoreDir:  t.TempDir(),
+		NoLog:     true,
+		NoSigs:    true,
+	})
+	require.NoError(t, err)
+	go s.Start()
+	require.True(t, s.ReadyForConnections(5*time.Second))
+	t.Cleanup(s.Shutdown)
+
+	tmpDir := t.TempDir()
+	themePath := filepath.Join(tmpDir, "theme.yaml")
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+
+	// подстройте под реальный формат theme.Load; если пустой файл
+	// трактуется как дефолтная тема — оставьте пустым
+	require.NoError(t, os.WriteFile(themePath, []byte(""), 0o644))
+	require.NoError(t, os.WriteFile(cfgPath,
+		[]byte("nats_url: "+s.ClientURL()+"\ntheme_path: "+themePath+"\n"), 0o644))
+
+	deps, err := Setup(Options{ConfigPath: cfgPath})
+	require.NoError(t, err)
+
+	assert.Equal(t, s.ClientURL(), deps.Cfg.NatsURL)
+	assert.NotNil(t, deps.Client)
+	assert.NotNil(t, deps.Model)
+	// клиент реально жив — можно дёрнуть дешёвый вызов
+	streams, err := deps.Client.ListStreams(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, streams)
+}
+
+func TestRun_SetupErrorPropagates(t *testing.T) {
+	tmpDir := t.TempDir()
+	badConfig := filepath.Join(tmpDir, "bad.yaml")
+	require.NoError(t, os.WriteFile(badConfig, []byte("not: valid: yaml: ["), 0o644))
+
+	err := Run(Options{ConfigPath: badConfig})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "load config")
 }
