@@ -44,7 +44,8 @@ func startJetStreamServer(t *testing.T) string {
 
 func newTestClient(t *testing.T, url string) *natsclient.Client {
 	t.Helper()
-	c, err := natsclient.Connect(t.Context(), url)
+	opt := natsclient.Options{URL: url}
+	c, err := natsclient.Connect(t.Context(), opt)
 	if err != nil {
 		t.Fatalf("natsclient.New(%q): %v", url, err)
 	}

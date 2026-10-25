@@ -17,11 +17,9 @@ import (
 
 // Options holds application startup parameters.
 type Options struct {
-	ConfigPath string
-
-	// ConnectTimeout is the timeout for the NATS connection attempt.
-	// If zero, a default of 10 seconds is used. Exposed primarily for tests.
+	ConfigPath     string
 	ConnectTimeout time.Duration
+	natsclient.Options
 }
 
 // Run is the entry point for cmd/lazynats/main.go.
@@ -69,8 +67,9 @@ func Setup(opts Options) (*Dependencies, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
-	client, err := natsclient.Connect(ctx, cfg.NatsURL)
+	natsOpts := opts.Options
+	natsOpts.URL = cfg.NatsURL
+	client, err := natsclient.Connect(ctx, natsOpts)
 	if err != nil {
 		return nil, fmt.Errorf("connect to nats %q: %w", cfg.NatsURL, err)
 	}

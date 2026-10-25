@@ -5,9 +5,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"lazynats/internal/app"
 	"lazynats/internal/config"
+	"lazynats/internal/natsclient"
 
 	"github.com/spf13/pflag"
 )
@@ -30,7 +32,6 @@ func main() {
 func run(args []string) int {
 	opts, showVersion, err := parseFlags(args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "lazynats:", err)
 		return 1
 	}
 
@@ -55,14 +56,29 @@ func parseFlags(args []string) (app.Options, bool, error) {
 	defaultPath, _ := config.DefaultPath()
 
 	var configPath string
-	fs.StringVarP(&configPath, "config", "c", defaultPath, "path to lazynats config file (yaml). Environment variables LAZYNATS_NATS_URL / LAZYNATS_THEME_PATH override file values")
+	fs.StringVarP(&configPath, "config", "c", defaultPath, "path to lazynats config file (yaml)")
 
 	var showVersion bool
 	fs.BoolVarP(&showVersion, "version", "v", false, "print version and exit")
 
+	var jwt string
+	fs.StringVarP(&jwt, "jwt", "j", "", "jwt token")
+
+	var connectTimeout time.Duration
+	fs.DurationVarP(&connectTimeout, "timeout", "t", 5*time.Second, "connect timeout")
+
 	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(os.Stderr, "Usage:")
+		fs.PrintDefaults()
+		fmt.Fprintln(os.Stderr, "lazynats:", err)
 		return app.Options{}, false, err
 	}
 
-	return app.Options{ConfigPath: configPath}, showVersion, nil
+	return app.Options{
+		ConfigPath:     configPath,
+		ConnectTimeout: connectTimeout,
+		Options: natsclient.Options{
+			JWT: jwt,
+		},
+	}, showVersion, nil
 }
